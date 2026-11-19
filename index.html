@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Olho Vivo SP - FIAP Global Solution</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="icon" href="assets/img/icon.png">
+</head>
+<body class="bg-[#090a0d] text-slate-100 flex flex-col min-h-screen md:h-screen md:overflow-hidden">
+
+    <!-- Tela inicial de autenticação: aparece no início e nunca mais volta após entrar -->
+    <div id="tela-token" class="fixed inset-0 z-50 bg-[#090a0d] text-slate-100 flex items-center justify-center p-4">
+        <div class="w-full max-w-md bg-[#12141a] border border-[#272b36] text-slate-100 rounded-xl shadow-2xl p-6 space-y-4">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div>
+                        <h1 class="text-xl font-bold text-white">
+                            Olho Vivo <span class="text-[#ed145b]">SP</span>
+                        </h1>
+                        <p class="text-xs text-slate-400">FIAP Global Solution • API SPTrans</p>
+                    </div>
+                </div>
+                <button id="btn-acessibilidade-login" type="button" class="text-xs bg-[#181b23] hover:bg-[#222631] text-slate-200 border border-[#2e3340] px-2.5 py-1.5 rounded font-medium transition" title="Ativar/desativar modo de alto contraste">
+                    ♿ Alto Contraste
+                </button>
+            </div>
+
+            <p class="text-xs text-slate-300 leading-relaxed">
+                Informe seu token da API Olho Vivo para acessar o monitoramento de linhas, ônibus em tempo real, paradas, previsões e corredores.
+            </p>
+
+            <div>
+                <label for="token-input" class="block text-[11px] font-bold text-[#ed145b] uppercase mb-1">
+                    Token da API Olho Vivo (SPTrans)
+                </label>
+                <input
+                    type="password"
+                    id="token-input"
+                    placeholder="Cole seu token aqui"
+                    class="w-full bg-[#090a0d] border border-[#2e3340] text-white placeholder-slate-500 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:border-[#ed145b]"
+                >
+            </div>
+
+            <button
+                id="btn-autenticar"
+                type="button"
+                class="w-full bg-[#ed145b] hover:bg-[#ff1e68] text-white py-2.5 rounded-lg text-sm font-semibold tracking-wide transition shadow-lg shadow-[#ed145b]/20"
+            >
+                Entrar
+            </button>
+
+            <p id="erro-token" class="hidden text-xs text-[#ff5c8d] font-medium text-center"></p>
+        </div>
+    </div>
+
+    <!-- Cabeçalho -->
+    <header class="bg-[#12141a] border-b border-[#272b36] text-white shadow-md px-4 py-3 flex flex-wrap justify-between items-center gap-2 z-20">
+        <div class="flex items-center gap-3">
+            <div>
+                <h1 class="text-lg md:text-xl font-bold leading-tight text-white">
+                    Olho Vivo <span class="text-[#ed145b]">SP</span>
+                    <span class="text-[11px] font-semibold uppercase tracking-wider bg-[#ed145b]/15 text-[#ed145b] border border-[#ed145b]/40 px-2 py-0.5 rounded ml-1.5">
+                        FIAP
+                    </span>
+                </h1>
+                <p class="text-[11px] text-slate-400 hidden sm:block">Monitoramento de ônibus, paradas, previsões e corredores em tempo real</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button id="btn-acessibilidade" type="button" class="text-xs bg-[#181b23] hover:bg-[#222631] text-slate-200 border border-[#2e3340] px-3 py-1.5 rounded font-medium transition" title="Ativar/desativar modo de alto contraste">
+                ♿ Alto Contraste
+            </button>
+        </div>
+    </header>
+
+    <!-- Layout Principal (começa oculto até o token ser validado) -->
+    <div id="app-principal" class="hidden flex-1 flex-col md:flex-row md:overflow-hidden">
+
+        <!-- Painel Lateral (vira aba flutuante recolhível no celular) -->
+        <aside class="w-full md:w-[430px] lg:w-[460px] bg-[#12141a] border-r border-[#272b36] flex flex-col md:h-full z-30 shadow-2xl">
+
+            <!-- Barra de controle flutuante exclusiva para mobile -->
+            <div class="flex md:hidden items-center justify-between px-3.5 py-2.5 bg-[#181b23] border-b border-[#272b36] rounded-t-2xl">
+                <span class="text-xs font-bold uppercase text-slate-300">Controles e Resultados</span>
+                <button id="btn-toggle-painel" type="button" class="text-xs bg-[#ed145b] hover:bg-[#ff1e68] text-white px-3 py-1 rounded font-semibold">
+                    Minimizar painel
+                </button>
+            </div>
+
+            <!-- Navegação entre recursos da API -->
+            <nav class="grid grid-cols-3 border-b border-[#272b36] bg-[#0e1015] text-xs font-semibold" aria-label="Modos de consulta">
+                <button id="tab-linhas" type="button" class="tab-btn active py-2.5 px-2 text-center border-b-2 border-[#ed145b] text-[#ed145b] bg-[#12141a]">
+                    Linhas &amp; Ônibus
+                </button>
+                <button id="tab-paradas" type="button" class="tab-btn py-2.5 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-white">
+                    Paradas &amp; Previsão
+                </button>
+                <button id="tab-corredores" type="button" class="tab-btn py-2.5 px-2 text-center border-b-2 border-transparent text-slate-400 hover:text-white">
+                    Corredores
+                </button>
+            </nav>
+
+            <!-- Aba 1: Linhas e Posição em Tempo Real -->
+            <section id="painel-linhas" class="p-3.5 border-b border-[#272b36] bg-[#151821] space-y-2.5">
+                <div>
+                    <label for="busca-linha-input" class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+                        Buscar Linha (Número ou Nome)
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="busca-linha-input" placeholder="Ex: 8000, Lapa, Paulista..." class="flex-1 bg-[#090a0d] border border-[#2e3340] text-white placeholder-slate-500 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#ed145b]" disabled>
+                        <button id="btn-buscar-linha" type="button" class="bg-[#ed145b] hover:bg-[#ff1e68] text-white px-4 py-2 rounded text-sm font-semibold transition disabled:opacity-50" disabled>
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+                    <label class="inline-flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                        <input type="checkbox" id="filtro-acessiveis" class="rounded border-[#2e3340] bg-[#090a0d] accent-[#ed145b]">
+                        <span>Apenas ônibus acessíveis (♿)</span>
+                    </label>
+                    <label class="inline-flex items-center gap-1.5 text-slate-300 cursor-pointer">
+                        <input type="checkbox" id="auto-refresh-toggle" class="rounded border-[#2e3340] bg-[#090a0d] accent-[#ed145b]">
+                        <span>Atualizar a cada 30s</span>
+                    </label>
+                </div>
+            </section>
+
+            <!-- Aba 2: Paradas e Previsão de Chegada -->
+            <section id="painel-paradas" class="hidden p-3.5 border-b border-[#272b36] bg-[#151821] space-y-2.5">
+                <div>
+                    <label for="busca-parada-input" class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+                        Buscar Ponto de Ônibus por Nome ou Endereço
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="busca-parada-input" placeholder="Ex: Paulista, Anhangabaú, Lapa..." class="flex-1 bg-[#090a0d] border border-[#2e3340] text-white placeholder-slate-500 rounded px-3 py-2 text-sm focus:outline-none focus:border-[#ed145b]" disabled>
+                        <button id="btn-buscar-parada" type="button" class="bg-[#ed145b] hover:bg-[#ff1e68] text-white px-4 py-2 rounded text-sm font-semibold transition disabled:opacity-50" disabled>
+                            Buscar
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="codigo-parada-direto" class="block text-[11px] font-bold text-slate-400 uppercase mb-1">
+                        Previsão Direta por Código do Ponto (opcional)
+                    </label>
+                    <div class="flex gap-2">
+                        <input type="text" id="codigo-parada-direto" placeholder="Ex: 340015329" class="flex-1 bg-[#090a0d] border border-[#2e3340] text-white placeholder-slate-500 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-[#ed145b]" disabled>
+                        <button id="btn-previsao-direta" type="button" class="bg-[#222631] hover:bg-[#ed145b] text-white border border-[#2e3340] px-3 py-1.5 rounded text-xs font-medium transition disabled:opacity-50" disabled>
+                            Ver Previsão
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Aba 3: Corredores de Ônibus -->
+            <section id="painel-corredores" class="hidden p-3.5 border-b border-[#272b36] bg-[#151821]">
+                <div class="flex items-center justify-between gap-2">
+                    <div>
+                        <h2 class="text-xs font-bold text-slate-200 uppercase">Corredores Exclusivos</h2>
+                        <p class="text-xs text-slate-400">Lista os corredores municipais cadastrados na SPTrans.</p>
+                    </div>
+                    <button id="btn-carregar-corredores" type="button" class="bg-[#ed145b] hover:bg-[#ff1e68] text-white px-3.5 py-2 rounded text-xs font-semibold transition disabled:opacity-50" disabled>
+                        Listar Corredores
+                    </button>
+                </div>
+            </section>
+
+            <!-- Resumo da Linha / Ponto Ativo -->
+            <div id="barra-contexto" class="hidden px-3.5 py-2 bg-[#ed145b]/15 border-b border-[#ed145b]/40 flex items-center justify-between gap-2 text-xs">
+                <span id="texto-contexto" class="font-medium text-[#ff7aa4] truncate"></span>
+                <button id="btn-limpar-mapa" type="button" class="text-white hover:text-[#ed145b] underline font-semibold shrink-0">
+                    Limpar mapa
+                </button>
+            </div>
+
+            <!-- Área de Resultados / Previsões -->
+            <div id="lista-resultados" class="flex-1 overflow-y-auto p-3.5 space-y-2.5 bg-[#0e1015]">
+                <p class="text-sm text-slate-400 text-center py-8">
+                    Busque uma linha, um ponto de parada ou liste os corredores cadastrados.
+                </p>
+            </div>
+
+            <!-- Créditos obrigatórios da SPTrans -->
+            <footer class="px-3.5 py-2.5 text-center text-[11px] text-slate-400 border-t border-[#272b36] bg-[#12141a]">
+                Dados fornecidos por <strong class="text-slate-200">SPTrans Olho Vivo</strong> • <span class="text-[#ed145b] font-semibold">FIAP Global Solution</span>
+            </footer>
+        </aside>
+
+        <!-- Área do Mapa -->
+        <main class="flex-1 h-full relative bg-[#090a0d]">
+            <div id="map" class="w-full h-full"></div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script type="module" src="assets/js/main.js"></script>
+</body>
+</html>

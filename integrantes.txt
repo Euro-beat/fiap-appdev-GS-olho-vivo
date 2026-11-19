@@ -1,0 +1,11 @@
+567662 - Eduardo
+ - Dev principal (ajuda Gemini)
+ - Geração do token SPTrans
+
+566931 - Emanuel
+ - Revisor de código (.html/.js)
+ - Apoio com o Vercel
+
+567417 - Luiz
+ - Revisor de código (.html/.css)
+ - Key user (pega ônibus diariamente)

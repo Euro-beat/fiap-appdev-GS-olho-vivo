@@ -1,0 +1,173 @@
+/* Tema Escuro Padrão (Identidade FIAP: #090a0d, #12141a e #ed145b) */
+:root {
+    --fiap-bg: #090a0d;
+    --fiap-surface: #12141a;
+    --fiap-surface-alt: #181b23;
+    --fiap-border: #272b36;
+    --fiap-pink: #ed145b;
+    --fiap-pink-hover: #ff1e68;
+}
+
+#map {
+    z-index: 1;
+    background-color: var(--fiap-bg);
+}
+
+/* Deixa os tiles do mapa em modo escuro elegante sem distorcer cores de marcadores */
+body:not(.alto-contraste) .leaflet-tile-pane {
+    filter: brightness(0.75) invert(1) contrast(1.15) hue-rotate(200deg) saturate(0.35);
+}
+
+body:not(.alto-contraste) .leaflet-popup-content-wrapper,
+body:not(.alto-contraste) .leaflet-popup-tip {
+    background-color: var(--fiap-surface);
+    color: #f8fafc;
+    border: 1px solid var(--fiap-border);
+}
+
+/* Modo de alto contraste extremo: #000, #fff e yellow */
+body.alto-contraste,
+body.alto-contraste aside,
+body.alto-contraste section,
+body.alto-contraste nav,
+body.alto-contraste footer,
+body.alto-contraste header,
+body.alto-contraste #lista-resultados,
+body.alto-contraste #tela-token,
+body.alto-contraste #tela-token > div {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border-color: #ffff00 !important;
+}
+
+body.alto-contraste h1,
+body.alto-contraste h2,
+body.alto-contraste h3,
+body.alto-contraste label,
+body.alto-contraste strong,
+body.alto-contraste b {
+    color: #ffff00 !important;
+}
+
+body.alto-contraste p,
+body.alto-contraste span,
+body.alto-contraste div,
+body.alto-contraste a {
+    color: #ffffff !important;
+}
+
+body.alto-contraste input,
+body.alto-contraste select,
+body.alto-contraste textarea {
+    background-color: #000000 !important;
+    color: #ffff00 !important;
+    border: 2px solid #ffff00 !important;
+}
+
+body.alto-contraste input::placeholder {
+    color: #ffffff !important;
+    opacity: 0.85;
+}
+
+body.alto-contraste button {
+    background-color: #000000 !important;
+    color: #ffff00 !important;
+    border: 2px solid #ffff00 !important;
+}
+
+body.alto-contraste button:hover:not(:disabled) {
+    background-color: #ffff00 !important;
+    color: #000000 !important;
+}
+
+body.alto-contraste button:disabled {
+    opacity: 0.55;
+    border-style: dashed !important;
+}
+
+body.alto-contraste .resultado-card,
+body.alto-contraste #barra-contexto {
+    background-color: #000000 !important;
+    color: #ffffff !important;
+    border: 2px solid #ffff00 !important;
+}
+
+body.alto-contraste .resultado-card span,
+body.alto-contraste #barra-contexto span {
+    background-color: #000000 !important;
+    color: #ffff00 !important;
+}
+
+body.alto-contraste input[type="checkbox"] {
+    accent-color: #ffff00;
+    width: 16px;
+    height: 16px;
+}
+
+body.alto-contraste #map {
+    border: 2px solid #ffff00 !important;
+}
+
+/* Scrollbar escura */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #090a0d;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2e3340;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #ed145b;
+}
+
+/* Comportamento de aba flutuante recolhível no celular */
+@media (max-width: 767px) {
+    body {
+        height: 100dvh;
+        overflow: hidden;
+    }
+
+    header {
+        position: relative;
+        z-index: 20;
+    }
+
+    main {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100dvh;
+        z-index: 1;
+    }
+
+    #map {
+        width: 100%;
+        height: 100%;
+    }
+
+    aside {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100% !important;
+        max-height: 62dvh;
+        border-radius: 16px 16px 0 0;
+        z-index: 30;
+        transition: transform 0.25s ease;
+    }
+
+    aside.recolhido {
+        max-height: none;
+    }
+
+    aside.recolhido > :not(:first-child) {
+        display: none !important;
+    }
+}
